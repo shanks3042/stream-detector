@@ -4,7 +4,7 @@ import {
 	setStorage
 } from "./components/storage.js";
 
-import notifIcon from "../img/icon-dark-96.png";
+// import notifIcon from "../img/icon-dark-96.png";
 
 // firefox/chrome
 chrome.browserAction = chrome.browserAction || chrome.action;
@@ -58,7 +58,7 @@ const downloadURL = (file) => {
 			err === undefined &&
 			chrome.notifications.create("error", {
 				type: "basic",
-				iconUrl: notifIcon,
+				// iconUrl: notifIcon,
 				title: _("notifDownErrorTitle"),
 				message: _("notifDownErrorText") + file.filename
 			})
@@ -357,7 +357,7 @@ const copyURL = async (info) => {
 		if ((await getStorage("notifPref")) === false) {
 			chrome.notifications.create("copy", {
 				type: "basic",
-				iconUrl: notifIcon,
+				// iconUrl: notifIcon,
 				title: _("notifCopiedTitle"),
 				message:
 					(list.methodIncomp
@@ -368,7 +368,7 @@ const copyURL = async (info) => {
 	} catch (e) {
 		chrome.notifications.create("error", {
 			type: "basic",
-			iconUrl: notifIcon,
+			// iconUrl: notifIcon,
 			title: _("notifErrorTitle"),
 			message: _("notifErrorText") + e
 		});

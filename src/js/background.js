@@ -2,18 +2,18 @@ import defaults from "./components/defaults.js";
 import supported from "./components/supported.js";
 import { getStorage, setStorage, clearStorage } from "./components/storage.js";
 
-import iconLight16 from "../img/icon-light-16.png";
-import iconLight48 from "../img/icon-light-48.png";
-import iconLight96 from "../img/icon-light-96.png";
-import iconDark16 from "../img/icon-dark-16.png";
-import iconDark48 from "../img/icon-dark-48.png";
-import iconDark96 from "../img/icon-dark-96.png";
-import iconLightEnabled16 from "../img/icon-light-enabled-16.png";
-import iconLightEnabled48 from "../img/icon-light-enabled-48.png";
-import iconLightEnabled96 from "../img/icon-light-enabled-96.png";
-import iconDarkEnabled16 from "../img/icon-dark-enabled-16.png";
-import iconDarkEnabled48 from "../img/icon-dark-enabled-48.png";
-import iconDarkEnabled96 from "../img/icon-dark-enabled-96.png";
+// import iconLight16 from "../img/icon-light-16.png";
+// import iconLight48 from "../img/icon-light-48.png";
+// import iconLight96 from "../img/icon-light-96.png";
+// import iconDark16 from "../img/icon-dark-16.png";
+// import iconDark48 from "../img/icon-dark-48.png";
+// import iconDark96 from "../img/icon-dark-96.png";
+// import iconLightEnabled16 from "../img/icon-light-enabled-16.png";
+// import iconLightEnabled48 from "../img/icon-light-enabled-48.png";
+// import iconLightEnabled96 from "../img/icon-light-enabled-96.png";
+// import iconDarkEnabled16 from "../img/icon-dark-enabled-16.png";
+// import iconDarkEnabled48 from "../img/icon-dark-enabled-48.png";
+// import iconDarkEnabled96 from "../img/icon-dark-enabled-96.png";
 
 // firefox/chrome
 chrome.browserAction = chrome.browserAction || chrome.action;
@@ -76,22 +76,22 @@ const updateVars = async () => {
 };
 
 const updateIcons = () => {
-	if (disablePref !== true)
-		chrome.browserAction.setIcon({
-			path: {
-				16: isDarkMode ? iconDarkEnabled16 : iconLightEnabled16,
-				48: isDarkMode ? iconDarkEnabled48 : iconLightEnabled48,
-				96: isDarkMode ? iconDarkEnabled96 : iconLightEnabled96
-			}
-		});
-	else
-		chrome.browserAction.setIcon({
-			path: {
-				16: isDarkMode ? iconDark16 : iconLight16,
-				48: isDarkMode ? iconDark48 : iconLight48,
-				96: isDarkMode ? iconDark96 : iconLight96
-			}
-		});
+	// if (disablePref !== true)
+	// 	chrome.browserAction.setIcon({
+	// 		path: {
+	// 			16: isDarkMode ? iconDarkEnabled16 : iconLightEnabled16,
+	// 			48: isDarkMode ? iconDarkEnabled48 : iconLightEnabled48,
+	// 			96: isDarkMode ? iconDarkEnabled96 : iconLightEnabled96
+	// 		}
+	// 	});
+	// else
+	// 	chrome.browserAction.setIcon({
+	// 		path: {
+	// 			16: isDarkMode ? iconDark16 : iconLight16,
+	// 			48: isDarkMode ? iconDark48 : iconLight48,
+	// 			96: isDarkMode ? iconDark96 : iconLight96
+	// 		}
+	// 	});
 };
 
 const addListeners = () => {
@@ -100,6 +100,13 @@ const addListeners = () => {
 		{ urls: ["<all_urls>"] },
 		isChrome ? ["requestHeaders", "extraHeaders"] : ["requestHeaders"]
 	);
+
+	chrome.webRequest.onBeforeRequest.addListener(
+		urlFilter,
+	
+		{ urls: ["<all_urls>"] },
+		["requestBody"]
+	);	
 
 	chrome.webRequest.onHeadersReceived.addListener(
 		urlFilter,
@@ -188,20 +195,49 @@ const urlValidator = (e, requestDetails, headerSize, headerCt) => {
 	return true;
 };
 
+function hasPattern(url) {
+	url = url.toLowerCase();
+	return (customExtPref && customSupported?.ext?.some(fe => new RegExp(fe.toLowerCase()).test(url)) && custumSupported ) ||
+		supported?.find(item => item?.ext?.some(fe => new RegExp(fe.toLowerCase()).test(url))) 
+}
+
+function getPattern(url) {
+  url = String(url).toLowerCase();
+  //#BUG: fix customSupported to return the regex pattern.
+  return (customExtPref && customSupported?.ext?.find(fe => new RegExp(fe.toLowerCase()).test(url)) ) ||
+    supported?.find(item => item?.ext?.some(fe => new RegExp(fe.toLowerCase()).test(url)))
+				?.ext?.find(fe => new RegExp(fe.toLowerCase()).test(url));
+	}
+
+// function hasContentType(details) {
+// 	let head
+// 	const headerCt = details.headers?.find(item => item.name.toLowerCase() == "content-type").toLowerCase();
+// 	if(headerCt?.value)
+// 	{
+// 		head = customCtPref && customSupported?.ct?.some(fe => headerCt.value)
+// 	}
+// 	return head;
+// }
+
 const urlFilter = (requestDetails) => {
-	let ext;
+	
 	let head;
 
 	const url = new URL(requestDetails.url).pathname.toLowerCase();
+	const ext = hasPattern(url);
+	
 	// check file extension and see if the url matches
-	ext =
-		customExtPref &&
-		customSupported.ext?.some((fe) => url.toLowerCase().includes("." + fe)) &&
-		customSupported;
-	if (!ext)
-		ext = supported.find((f) =>
-			f.ext?.some((fe) => url.toLowerCase().includes("." + fe))
-		);
+
+	// ext =
+	// 	customExtPref &&
+	// 	customSupported.ext?.some((fe) => url.toLowerCase().includes("." + fe)) &&
+	// 	customSupported;
+	// if (!ext)
+	// 	ext = supported.find((f) =>
+	// 		f.ext?.some((fe) => url.toLowerCase().includes("." + fe))
+	// 	);
+
+
 
 	// depends which listener caught it
 	requestDetails.headers =
@@ -215,6 +251,7 @@ const urlFilter = (requestDetails) => {
 		head =
 			customCtPref &&
 			customSupported?.ct?.some((fe) =>
+				// new RegExp(fe.toLowerCase().test(headerCt.value.toLowerCase()))
 				headerCt.value.toLowerCase().includes(fe.toLowerCase())
 			) &&
 			customSupported;
@@ -238,6 +275,7 @@ const urlFilter = (requestDetails) => {
 };
 
 const addURL = async (requestDetails) => {
+	// console.log(`addURL: with requestDetails ${requestDetails?.url}`)
 	const url = new URL(requestDetails.url);
 
 	// MSS workaround
@@ -266,6 +304,7 @@ const addURL = async (requestDetails) => {
 		timeStamp: requestDetails.timeStamp,
 		type: requestDetails.type,
 		url: requestDetails.url,
+		pattern: getPattern(requestDetails.url),
 		headers: requestDetails.headers?.filter(
 			(h) =>
 				h.name.toLowerCase() === "user-agent" ||
@@ -286,23 +325,53 @@ const addURL = async (requestDetails) => {
 	const isExistingRequest = urlStorage.find(
 		(u) => u.requestId === requestDetails.requestId
 	);
+
+	console.log(`addURL: isExistingRequest = ${isExistingRequest}`)
+
 	if (!isExistingRequest) {
+		console.log(`Adding request ${newRequestDetails.url} to storage`)
+
+
+		chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+		if (tabs[0]) {
+			chrome.tabs.sendMessage(tabs[0].id, {
+			action: 'notifyNewVideo',
+			//log: networkLog.slice(0, 10),  // Send recent entries
+			newEntry: newRequestDetails//requestDetails
+			});
+		}
+		});
+
 		urlStorage.push(newRequestDetails);
 		chrome.browserAction.getBadgeText({}, (badgeText) =>
 			chrome.browserAction.setBadgeText({
 				text: (Number(badgeText) + 1).toString()
 			})
 		);
-	} else {
-		const mergedHeaders = [
-			...isExistingRequest.headers,
-			...newRequestDetails.headers
-		];
 
-		urlStorage[
-			urlStorage.findIndex((u) => u.requestId === requestDetails.requestId)
-		].headers = mergedHeaders;
+
+
+	} 
+	else {
+    // Fix: Ensure headers exists and is an array
+		const existingHeaders = Array.isArray(isExistingRequest.headers) ? isExistingRequest.headers : [];
+		const newHeaders = Array.isArray(newRequestDetails.headers) ? newRequestDetails.headers : [];
+		
+		const mergedHeaders = [...existingHeaders, ...newHeaders];
+		
+		const index = urlStorage.findIndex((u) => u.requestId === requestDetails.requestId);
+		urlStorage[index].headers = mergedHeaders;
 	}
+	// else {
+	// 	const mergedHeaders = [
+	// 		...isExistingRequest.headers,
+	// 		...newRequestDetails.headers
+	// 	];
+
+	// 	urlStorage[
+	// 		urlStorage.findIndex((u) => u.requestId === requestDetails.requestId)
+	// 	].headers = mergedHeaders;
+	// }
 
 	// debounce lots of requests in a short period of time
 	clearTimeout(requestTimeoutId);

@@ -1,6 +1,6 @@
 const supported = [
 	{
-		ext: ["m3u8"],
+		ext: ["index.*m3u8", "m3u8"],
 		ct: [
 			"application/x-mpegurl",
 			"application/vnd.apple.mpegurl",
