@@ -1,4 +1,3 @@
-// import { copyURL } from "./util";
 
 const isNullOrWhitespace = (str) => !str || !str.trim();
 
@@ -20,7 +19,7 @@ function addVideoButton(entry) {
 //   const buttonIndex = document.querySelectorAll('.video-log-btn').length + 1;
 //   const buttonIndex = document.querySelectorAll('#video-log-btn').length + 1;
   button.id = `video-log-btn-${buttonIndex}`;  // Unique ID for each button
-  button.innerText = `Download ${entry.category} ( ${entry.pattern} )`;
+  button.innerText = `Download ${entry.category} ( ${entry.filename} )`;
   button.style.cssText = `
     position: fixed; top: ${10 + (buttonIndex - 1) * 30}px; right: 10px; z-index: 99999;
     padding: 2px 5px; background: #0066cc; color: white;
@@ -50,45 +49,67 @@ function addVideoButton(entry) {
 
 async function sendDownloadRequest(entry) {
 
-  const h1s = document.querySelectorAll("h1");
-  const h1 = document.querySelector('h1');
+  // const h1s = document.querySelectorAll("h1");
+  const h1 = document.querySelector('h1[itemprop="name"]');
   const showName = h1?.querySelector('span')?.textContent || 'No span found';
   
-
+  // const startDate = document.querySelector('a[href="https://aniworld.to/animes/jahr/2026"]').textContent;
+  const span = document.querySelector('span[itemprop="startDate"]');
+  const startDate = span ? span.querySelector('a').textContent.trim() : '';
 
   // By exact itemtype match
   const seasonDiv = document.querySelector('div[itemtype="http://schema.org/TVSeason"]')
   const seasonNumber = seasonDiv?.querySelector('meta[itemprop="seasonNumber"]')?.content;
   const episodeNumber = seasonDiv?.querySelector('meta[itemprop="episode"]')?.content;
 
-  console.log(`Currently open: ${showName}, season: ${seasonNumber}, episode: ${episodeNumber}`); // "Mashle: Magic and Muscles"
-
-  // // Combined with itemprop (most specific)
-  // document.querySelector('div[itemprop="containsSeason"][itemtype="http://schema.org/TVSeason"]')
-
-  // // Contains TVSeason (if URL varies)
-  // document.querySelector('div[itemtype*="TVSeason"]')
-
-  // // All elements with itemtype attribute
-  // document.querySelectorAll('div[itemtype]')
+  console.log(`Currently open: ${showName}, season: ${seasonNumber}, episode: ${episodeNumber}`); 
 
   let showFriendlyName;
-  if(!isNullOrWhitespace(showName)) {
+  if(showName) {
     showFriendlyName = showName
   } else {
     showFriendlyName = entry.tabData.title
+
+  }
+  showFriendlyName = showName.replace(/:/g, "-").replace(/[^a-zA-Z0-9-]/g, "").replace(/\b\w/g, l => l.toUpperCase());
+  showFriendlyName = showFriendlyName.replace(/:/g, "-");
+  console.log(`showfriendlyName = ${showFriendlyName}`)
+
+  let filename = `${showFriendlyName}`;
+  let directory = `${showFriendlyName}`;
+  if (entry.startDate) {
+    directory += `-${entry.startDate}`;
   }
 
-    const payload = {
-      timestamp: Date.now(),
-      pageUrl: window.location.href,
-      lastEntry: entry,
-      show: showName,
-      season: seasonNumber,
-      episode: episodeNumber,
-    };
+  if (seasonNumber) {
+    seasonNumber = seasonNumber.toString().padStart(2, "0");
+    filename = `${showFriendlyName}-S${seasonNumber}`;
+    directory = new URL(`season${seasonNumber}`, showFriendlyName).pathname;
+  }
+
+  if (episodeNumber) {
+    episodeNumber = episodeNumber.toString().padStart(3, "0");
+    filename = `${filename}E${episodeNumber}`;
+  }
+
+  filename += "%(ext)s"
+
+  filename = new URL(filename, directory).pathname;
+
+  const payload = {
+    timestamp: Date.now(),
+    pageUrl: window.location.href,
+    requestDetails: entry,
+    show: showName,
+    showFriendlyName: showFriendlyName,
+    filename: filename,
+    season: seasonNumber,
+    episode: episodeNumber,
+    startDate: startDate,
+    userAgent: navigator.userAgent
+  };
     
-    await fetch('http://localhost:5476', {
+    await fetch('http://localhost:5476/api', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
