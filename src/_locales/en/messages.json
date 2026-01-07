@@ -262,5 +262,8 @@
 	},
 	"ytdlp": {
 		"message": "yt-dlp command"
+	}, 
+	"downloadServer" : {
+		"message": "Downloader server"
 	}
 }

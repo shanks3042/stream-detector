@@ -1,5 +1,11 @@
 
+
+let downloadServer = "http://localhost:5476/api";
+
+
 const isNullOrWhitespace = (str) => !str || !str.trim();
+
+
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'notifyNewVideo') {
@@ -8,16 +14,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Create button with network log data (creates NEW button each time)
+
 function addVideoButton(entry) {
 
-  //const entry = networkLog[networkLog.length - 1] || [];
   console.log(`Adding entry to html ${entry?.url}`)
   const button = document.createElement('button');
   const buttonIndex = document.querySelectorAll('[id^="video-log-btn-"]').length + 1;
 
-//   const buttonIndex = document.querySelectorAll('.video-log-btn').length + 1;
-//   const buttonIndex = document.querySelectorAll('#video-log-btn').length + 1;
+
   button.id = `video-log-btn-${buttonIndex}`;  // Unique ID for each button
   button.innerText = `Download ${entry.category} ( ${entry.filename} )`;
   button.style.cssText = `
@@ -27,17 +31,7 @@ function addVideoButton(entry) {
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
   `;
 
-// button.onclick = async () => {
-//   try {
-//     // Call your exported copyURL function instead of fetch
-//     const result = await copyURL({ 
-//       linkUrl: window.location.href  // Pass the URL you want to copy
-//     });
-//     console.log(result);  // "URL copied" or whatever your function returns
-//   } catch (error) {
-//     console.error('Copy failed:', error);
-//   }
-// };
+
 
   button.onclick = async () => {
     await sendDownloadRequest(entry);
@@ -49,29 +43,26 @@ function addVideoButton(entry) {
 
 async function sendDownloadRequest(entry) {
 
-  // const h1s = document.querySelectorAll("h1");
+;
   const h1 = document.querySelector('h1[itemprop="name"]');
-  const showName = h1?.querySelector('span')?.textContent || 'No span found';
+  const showName = h1?.querySelector('span')?.textContent || null;
   
-  // const startDate = document.querySelector('a[href="https://aniworld.to/animes/jahr/2026"]').textContent;
   const span = document.querySelector('span[itemprop="startDate"]');
   const startDate = span ? span.querySelector('a').textContent.trim() : '';
 
-  // By exact itemtype match
   const seasonDiv = document.querySelector('div[itemtype="http://schema.org/TVSeason"]')
-  const seasonNumber = seasonDiv?.querySelector('meta[itemprop="seasonNumber"]')?.content;
-  const episodeNumber = seasonDiv?.querySelector('meta[itemprop="episode"]')?.content;
+  let seasonNumber = seasonDiv?.querySelector('meta[itemprop="seasonNumber"]')?.content;
+  let episodeNumber = seasonDiv?.querySelector('meta[itemprop="episode"]')?.content;
 
   console.log(`Currently open: ${showName}, season: ${seasonNumber}, episode: ${episodeNumber}`); 
 
   let showFriendlyName;
   if(showName) {
-    showFriendlyName = showName
+    showFriendlyName = showName;
   } else {
-    showFriendlyName = entry.tabData.title
-
+    showFriendlyName = entry.tabData.title;
   }
-  showFriendlyName = showName.replace(/:/g, "-").replace(/[^a-zA-Z0-9-]/g, "").replace(/\b\w/g, l => l.toUpperCase());
+  showFriendlyName = showFriendlyName.replace(/:/g, "-").replace(/[^a-zA-Z0-9-]/g, "").replace(/\b\w/g, l => l.toUpperCase());
   showFriendlyName = showFriendlyName.replace(/:/g, "-");
   console.log(`showfriendlyName = ${showFriendlyName}`)
 
@@ -84,17 +75,16 @@ async function sendDownloadRequest(entry) {
   if (seasonNumber) {
     seasonNumber = seasonNumber.toString().padStart(2, "0");
     filename = `${showFriendlyName}-S${seasonNumber}`;
-    directory = new URL(`season${seasonNumber}`, showFriendlyName).pathname;
+    directory = joinPath(showFriendlyName, `season${seasonNumber}`);
   }
-
   if (episodeNumber) {
     episodeNumber = episodeNumber.toString().padStart(3, "0");
     filename = `${filename}E${episodeNumber}`;
   }
 
-  filename += "%(ext)s"
+  filename += ".%(ext)s"
 
-  filename = new URL(filename, directory).pathname;
+  filename = joinPath(directory, filename); 
 
   const payload = {
     timestamp: Date.now(),
@@ -103,17 +93,51 @@ async function sendDownloadRequest(entry) {
     show: showName,
     showFriendlyName: showFriendlyName,
     filename: filename,
-    season: seasonNumber,
-    episode: episodeNumber,
-    startDate: startDate,
     userAgent: navigator.userAgent
   };
-    
-    await fetch('http://localhost:5476/api', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+
+  server = `${downloadServer}`;
+  console.log(`Sending download request to server ${server}`);
+
+  if (!isNullOrWhitespace(server)) {
+
+    await fetch(server, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+  }
   
 }
 
+function joinPath(...parts) {
+  return parts
+    .filter(Boolean)
+    .map((p, i) =>
+      i === 0
+        ? p.replace(/\/+$/, "")      // first: remove trailing slashes
+        : p.replace(/^\/+|\/+$/g, "") // others: remove leading/trailing
+    )
+    .join("/");
+}
+
+
+
+
+
+// Load initial value
+browser.storage.local.get("downloadServer").then(result => {
+  if (result.downloadServer) {
+    downloadServer = result.downloadServer;
+  }
+  console.log("Using download server:", downloadServer);
+});
+
+// Listen for FUTURE changes (this is what you were missing)
+browser.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.downloadServer) {
+    downloadServer = changes.downloadServer.newValue || "";
+    console.log("Download server updated:", downloadServer);
+    // Any other update logic here
+  }
+});
