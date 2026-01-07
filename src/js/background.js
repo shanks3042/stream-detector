@@ -334,6 +334,8 @@ const addURL = async (requestDetails) => {
 
 		chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
 		if (tabs[0]) {
+			console.log(`Sending message notifiyNewVideo on tab ${tabs[0].url}`);
+
 			chrome.tabs.sendMessage(tabs[0].id, {
 			action: 'notifyNewVideo',
 			//log: networkLog.slice(0, 10),  // Send recent entries

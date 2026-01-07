@@ -1,4 +1,5 @@
 // import { copyURL } from "./util";
+const path = require('path');
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'notifyNewVideo') {
@@ -18,7 +19,7 @@ function addVideoButton(entry) {
 //   const buttonIndex = document.querySelectorAll('.video-log-btn').length + 1;
 //   const buttonIndex = document.querySelectorAll('#video-log-btn').length + 1;
   button.id = `video-log-btn-${buttonIndex}`;  // Unique ID for each button
-  button.innerText = `Download ${entry.category} ( ${entry.pattern} )`;
+  button.innerText = `Download ${entry.category} ( ${entry.filename} )`;
   button.style.cssText = `
     position: fixed; top: ${10 + (buttonIndex - 1) * 30}px; right: 10px; z-index: 99999;
     padding: 2px 5px; background: #0066cc; color: white;
@@ -48,40 +49,66 @@ function addVideoButton(entry) {
 
 async function sendDownloadRequest(entry) {
 
-  const h1s = document.querySelectorAll("h1");
-  const h1 = document.querySelector('h1');
+  // const h1s = document.querySelectorAll("h1");
+  const h1 = document.querySelector('h1[itemprop="name"]');
   const showName = h1?.querySelector('span')?.textContent || 'No span found';
   
-
+  // const startDate = document.querySelector('a[href="https://aniworld.to/animes/jahr/2026"]').textContent;
+  const span = document.querySelector('span[itemprop="startDate"]');
+  const startDate = span ? span.querySelector('a').textContent.trim() : '';
 
   // By exact itemtype match
   const seasonDiv = document.querySelector('div[itemtype="http://schema.org/TVSeason"]')
   const seasonNumber = seasonDiv?.querySelector('meta[itemprop="seasonNumber"]')?.content;
   const episodeNumber = seasonDiv?.querySelector('meta[itemprop="episode"]')?.content;
 
-  console.log(`Currently open: ${showName}, season: ${seasonNumber}, episode: ${episodeNumber}`); // "Mashle: Magic and Muscles"
+  console.log(`Currently open: ${showName}, season: ${seasonNumber}, episode: ${episodeNumber}`); 
 
-  // // Combined with itemprop (most specific)
-  // document.querySelector('div[itemprop="containsSeason"][itemtype="http://schema.org/TVSeason"]')
+  // let showFriendlyName;
+  // if(showName) {
+  //   showFriendlyName = showName
+  // } else {
+  //   showFriendlyName = entry.tabData.title
 
-  // // Contains TVSeason (if URL varies)
-  // document.querySelector('div[itemtype*="TVSeason"]')
+  // }
+  // showFriendlyName = showName.replace(/:/g, "-").replace(/[^a-zA-Z0-9-]/g, "").replace(/\b\w/g, l => l.toUpperCase());
+  // showFriendlyName = showFriendlyName.replace(/:/g, "-");
+  // console.log(`showfriendlyName = ${showFriendlyName}`)
 
-  // // All elements with itemtype attribute
-  // document.querySelectorAll('div[itemtype]')
+  // let filename = showFriendlyName;
+  // let directory = `${showFriendlyName}`;
+  // if (entry.startDate) {
+  //   directory += `-${entry.startDate}`;
+  // }
 
+  // if (seasonNumber) {
+  //   seasonNumber = seasonNumber.toString().padStart(2, "0");
+  //   filename = `${showFriendlyName}-S${seasonNumber}`;
+  //   directory = new URL(`season${seasonNumber}`, showFriendlyName).pathname;
+  // }
 
+  // if (episodeNumber) {
+  //   episodeNumber = episodeNumber.toString().padStart(3, "0");
+  //   filename = `${filename}E${episodeNumber}`;
+  // }
+
+  // filename += "%(ext)s"
+
+  // filename = new URL(filename, directory).pathname;
 
     const payload = {
       timestamp: Date.now(),
       pageUrl: window.location.href,
-      lastEntry: entry,
+      requestDetails: entry,
       show: showName,
-      season: seasonNumber,
-      episode: episodeNumber,
+      // filename: filename,
+      // season: seasonNumber,
+      // episode: episodeNumber,
+      // startDate: startDate,
+      userAgent: navigator.userAgent
     };
     
-    await fetch('http://localhost:5476', {
+    await fetch('http://localhost:5476/api', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -89,40 +116,3 @@ async function sendDownloadRequest(entry) {
   
 }
 
-//   button.onclick = async () => {
-//     // Create JSON payload with exact same structure as popup
-//     const payload = {
-//       timestamp: Date.now(),
-//       pageUrl: window.location.href,
-//       networkLog: networkLog.map(entry => ({
-//         requestId: entry.requestId,
-//         extension: entry.extension,
-//         id: entry.id,
-//         url: entry.url,
-//         method: entry.method,
-//         type: entry.type,
-//         time: entry.time,
-//         status: entry.status,
-//         size: entry.size || 0,
-//         duration: entry.duration || 0
-//       }))
-//     };
-
-//     try {
-//       const response = await fetch('https://your-server.com/api/log', {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify(payload)
-//       });
-//       button.innerText = `Sent #${buttonIndex}! ✓`;
-//       setTimeout(() => { 
-//         button.innerText = `Video Log #${buttonIndex} (${networkLog.length})`; 
-//       }, 2000);
-//     } catch (e) {
-//       console.error('Send failed:', e);
-//       button.innerText = `Failed #${buttonIndex}`;
-//     }
-//   };
-
-//   document.body.appendChild(button);
-// }
