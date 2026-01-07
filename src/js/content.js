@@ -1,5 +1,7 @@
 // import { copyURL } from "./util";
 
+const isNullOrWhitespace = (str) => !str || !str.trim();
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'notifyNewVideo') {
     console.log(`notifyNewVideo: ${JSON.stringify(message, null, 2)}`);
@@ -70,7 +72,12 @@ async function sendDownloadRequest(entry) {
   // // All elements with itemtype attribute
   // document.querySelectorAll('div[itemtype]')
 
-
+  let showFriendlyName;
+  if(!isNullOrWhitespace(showName)) {
+    showFriendlyName = showName
+  } else {
+    showFriendlyName = entry.tabData.title
+  }
 
     const payload = {
       timestamp: Date.now(),
@@ -89,40 +96,3 @@ async function sendDownloadRequest(entry) {
   
 }
 
-//   button.onclick = async () => {
-//     // Create JSON payload with exact same structure as popup
-//     const payload = {
-//       timestamp: Date.now(),
-//       pageUrl: window.location.href,
-//       networkLog: networkLog.map(entry => ({
-//         requestId: entry.requestId,
-//         extension: entry.extension,
-//         id: entry.id,
-//         url: entry.url,
-//         method: entry.method,
-//         type: entry.type,
-//         time: entry.time,
-//         status: entry.status,
-//         size: entry.size || 0,
-//         duration: entry.duration || 0
-//       }))
-//     };
-
-//     try {
-//       const response = await fetch('https://your-server.com/api/log', {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify(payload)
-//       });
-//       button.innerText = `Sent #${buttonIndex}! ✓`;
-//       setTimeout(() => { 
-//         button.innerText = `Video Log #${buttonIndex} (${networkLog.length})`; 
-//       }, 2000);
-//     } catch (e) {
-//       console.error('Send failed:', e);
-//       button.innerText = `Failed #${buttonIndex}`;
-//     }
-//   };
-
-//   document.body.appendChild(button);
-// }
