@@ -1,5 +1,3 @@
-// import { copyURL } from "./util";
-const path = require('path');
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'notifyNewVideo') {
@@ -64,47 +62,47 @@ async function sendDownloadRequest(entry) {
 
   console.log(`Currently open: ${showName}, season: ${seasonNumber}, episode: ${episodeNumber}`); 
 
-  // let showFriendlyName;
-  // if(showName) {
-  //   showFriendlyName = showName
-  // } else {
-  //   showFriendlyName = entry.tabData.title
+  let showFriendlyName;
+  if(showName) {
+    showFriendlyName = showName
+  } else {
+    showFriendlyName = entry.tabData.title
 
-  // }
-  // showFriendlyName = showName.replace(/:/g, "-").replace(/[^a-zA-Z0-9-]/g, "").replace(/\b\w/g, l => l.toUpperCase());
-  // showFriendlyName = showFriendlyName.replace(/:/g, "-");
-  // console.log(`showfriendlyName = ${showFriendlyName}`)
+  }
+  showFriendlyName = showName.replace(/:/g, "-").replace(/[^a-zA-Z0-9-]/g, "").replace(/\b\w/g, l => l.toUpperCase());
+  showFriendlyName = showFriendlyName.replace(/:/g, "-");
+  console.log(`showfriendlyName = ${showFriendlyName}`)
 
-  // let filename = showFriendlyName;
-  // let directory = `${showFriendlyName}`;
-  // if (entry.startDate) {
-  //   directory += `-${entry.startDate}`;
-  // }
+  let filename = showFriendlyName;
+  let directory = `${showFriendlyName}`;
+  if (entry.startDate) {
+    directory += `-${entry.startDate}`;
+  }
 
-  // if (seasonNumber) {
-  //   seasonNumber = seasonNumber.toString().padStart(2, "0");
-  //   filename = `${showFriendlyName}-S${seasonNumber}`;
-  //   directory = new URL(`season${seasonNumber}`, showFriendlyName).pathname;
-  // }
+  if (seasonNumber) {
+    seasonNumber = seasonNumber.toString().padStart(2, "0");
+    filename = `${showFriendlyName}-S${seasonNumber}`;
+    directory = new URL(`season${seasonNumber}`, showFriendlyName).pathname;
+  }
 
-  // if (episodeNumber) {
-  //   episodeNumber = episodeNumber.toString().padStart(3, "0");
-  //   filename = `${filename}E${episodeNumber}`;
-  // }
+  if (episodeNumber) {
+    episodeNumber = episodeNumber.toString().padStart(3, "0");
+    filename = `${filename}E${episodeNumber}`;
+  }
 
-  // filename += "%(ext)s"
+  filename += "%(ext)s"
 
-  // filename = new URL(filename, directory).pathname;
+  filename = new URL(filename, directory).pathname;
 
     const payload = {
       timestamp: Date.now(),
       pageUrl: window.location.href,
       requestDetails: entry,
       show: showName,
-      // filename: filename,
-      // season: seasonNumber,
-      // episode: episodeNumber,
-      // startDate: startDate,
+      filename: filename,
+      season: seasonNumber,
+      episode: episodeNumber,
+      startDate: startDate,
       userAgent: navigator.userAgent
     };
     
