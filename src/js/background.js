@@ -197,8 +197,10 @@ const urlValidator = (e, requestDetails, headerSize, headerCt) => {
 
 function hasPattern(url) {
 	url = url.toLowerCase();
-	return (customExtPref && customSupported?.ext?.some(fe => new RegExp(fe.toLowerCase()).test(url)) && custumSupported ) ||
-		supported?.find(item => item?.ext?.some(fe => new RegExp(fe.toLowerCase()).test(url))) 
+	// return (customExtPref && customSupported?.ext?.some(fe => new RegExp(fe.toLowerCase()).test(url)) && custumSupported ) ||
+	// 	supported?.find(item => item?.ext?.some(fe => new RegExp(fe.toLowerCase()).test(url))) 
+	return (customExtPref && customSupported.ext?.some(fe => url.includes(`.${fe}`)) && customSupported) || 
+			(supported.find(f => f.ext?.some(fe => url.includes(`.${fe}`))));
 }
 
 function getPattern(url) {
@@ -208,16 +210,15 @@ function getPattern(url) {
     supported?.find(item => item?.ext?.some(fe => new RegExp(fe.toLowerCase()).test(url)))
 				?.ext?.find(fe => new RegExp(fe.toLowerCase()).test(url));
 	}
+function getExt(url) {
+	url = String(url).toLocaleLowerCase();
+return (
+  (customExtPref && customSupported.ext?.find(fe => url.includes(`.${fe}`))) ||
+  supported.find(f => f.ext?.some(fe => url.includes(`.${fe}`)))?.ext?.find(fe => url.includes(`.${fe}`))
+);
 
-// function hasContentType(details) {
-// 	let head
-// 	const headerCt = details.headers?.find(item => item.name.toLowerCase() == "content-type").toLowerCase();
-// 	if(headerCt?.value)
-// 	{
-// 		head = customCtPref && customSupported?.ct?.some(fe => headerCt.value)
-// 	}
-// 	return head;
-// }
+}
+
 
 const urlFilter = (requestDetails) => {
 	
@@ -225,6 +226,8 @@ const urlFilter = (requestDetails) => {
 
 	const url = new URL(requestDetails.url).pathname.toLowerCase();
 	const ext = hasPattern(url);
+	requestDetails.ext = getExt(url);
+	console.log(`found extension ${requestDetails.ext} for url ${url}`);
 	
 	// check file extension and see if the url matches
 
@@ -305,6 +308,7 @@ const addURL = async (requestDetails) => {
 		type: requestDetails.type,
 		url: requestDetails.url,
 		pattern: getPattern(requestDetails.url),
+		ext : requestDetails.ext,
 		headers: requestDetails.headers?.filter(
 			(h) =>
 				h.name.toLowerCase() === "user-agent" ||

@@ -5,6 +5,10 @@ let downloadServer = "http://localhost:5476/api";
 
 const isNullOrWhitespace = (str) => !str || !str.trim();
 
+function getExtension(filename) {
+  const lastDot = filename.lastIndexOf('.');
+  return lastDot === -1 ? '' : filename.substring(lastDot + 1);
+}
 
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -34,7 +38,18 @@ function addVideoButton(entry) {
 
 
   button.onclick = async () => {
+
+    
+    // Force repaint to ensure change sticks
+    button.offsetHeight;      
+
     await sendDownloadRequest(entry);
+
+    button.style.background = '#28a745';
+    // Use backgroundColor (more specific) instead of background
+    button.style.backgroundColor = '#28a745';
+    button.style.setProperty('background-color', '#28a745', 'important');  // Force override
+
   };
 
   document.body.appendChild(button);
@@ -82,9 +97,24 @@ async function sendDownloadRequest(entry) {
     filename = `${filename}E${episodeNumber}`;
   }
 
-  filename += ".%(ext)s"
+  if (entry.category === "stream")
+  {
+    filename += ".%(ext)s";
+  }
+  else if (filename !== entry.filename ) {
+    filename += entry.filename;
+  }
+  if (directory !== filename) {
+    filename = joinPath(directory, filename); 
+  }
 
-  filename = joinPath(directory, filename); 
+  const ext = getExtension(filename); 
+  if ((isNullOrWhitespace(ext) || ext.length > 10) && !isNullOrWhitespace(entry.ext)) {
+    filename += `.${entry.ext}`;
+  }
+
+
+
 
   const payload = {
     timestamp: Date.now(),
@@ -120,7 +150,6 @@ function joinPath(...parts) {
     )
     .join("/");
 }
-
 
 
 

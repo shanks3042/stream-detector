@@ -1,6 +1,6 @@
 const supported = [
 	{
-		ext: ["index.*m3u8", "m3u8"],
+		ext: ["m3u8"],
 		ct: [
 			"application/x-mpegurl",
 			"application/vnd.apple.mpegurl",
@@ -38,7 +38,7 @@ const supported = [
 	},
 	{
 		ext: ["mp4", "m4v", "m4s"],
-		ct: ["video/x-m4v", "video/m4v", "video/mp4"],
+		ct: ["video/x-m4v", "video/m4v", "video/mp4", "media"],
 		type: "MP4",
 		category: "files"
 	},
