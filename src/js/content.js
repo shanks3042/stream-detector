@@ -77,7 +77,7 @@ async function sendDownloadRequest(entry) {
   } else {
     showFriendlyName = entry.tabData.title;
   }
-  showFriendlyName = showFriendlyName.replace(/:/g, "-").replace(/[^a-zA-Z0-9-]/g, "").replace(/\b\w/g, l => l.toUpperCase());
+  showFriendlyName = showFriendlyName.replace(/:/g, "-").replace(/\b\w/g, l => l.toUpperCase()).replace(/[^a-zA-Z0-9-]/g, "");
   showFriendlyName = showFriendlyName.replace(/:/g, "-");
   console.log(`showfriendlyName = ${showFriendlyName}`)
 
