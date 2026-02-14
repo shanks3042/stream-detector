@@ -187,8 +187,10 @@ async function sendDownloadRequest(entry) {
 
   let filename = `${showFriendlyName}`;
   let directory = `${showFriendlyName}`;
+  let baseDirectory = directory;
   if (!isNullOrWhitespace(year)) {
     directory += `-${year}`;
+    baseDirectory = directory;
   }
 
   if (seasonNumber) {
@@ -234,6 +236,8 @@ async function sendDownloadRequest(entry) {
     requestDetails: entry,
     show: showName,
     showFriendlyName: showFriendlyName,
+    year: year,
+    directory: baseDirectory,
     filename: filename,
     episodeTitle: episodeTitle,
     userAgent: navigator.userAgent,
